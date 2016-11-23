@@ -4,3 +4,7 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 
 [dependencies]
+antidote = "1.0"
+log = "0.3"
+log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false }
+lru-cache = "0.1"
