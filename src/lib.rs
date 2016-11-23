@@ -3,6 +3,16 @@ extern crate log;
 extern crate log4rs;
 extern crate lru_cache;
 
+#[cfg(feature = "log-mdc")]
+extern crate log_mdc;
+#[cfg(feature = "serde-value")]
+extern crate serde_value;
+#[cfg(feature = "lazy_static")]
+#[macro_use]
+extern crate lazy_static;
+#[cfg(feature = "regex")]
+extern crate regex;
+
 use antidote::Mutex;
 use log::LogRecord;
 use log4rs::append::Append;

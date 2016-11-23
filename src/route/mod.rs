@@ -7,6 +7,9 @@ use std::sync::Arc;
 
 use AppenderInner;
 
+#[cfg(feature = "mdc-router")]
+pub mod mdc;
+
 pub struct Cache(LruCache<String, Appender>);
 
 impl Cache {
