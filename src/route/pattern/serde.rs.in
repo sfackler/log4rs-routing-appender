@@ -1,0 +1,5 @@
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PatternRouterConfig {
+    pattern: AppenderConfig,
+}

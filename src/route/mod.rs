@@ -16,8 +16,8 @@ use std::collections::BTreeMap;
 
 use {CacheInner, AppenderInner};
 
-#[cfg(feature = "mdc-router")]
-pub mod mdc;
+#[cfg(feature = "pattern-router")]
+pub mod pattern;
 
 pub struct Cache(LruCache<String, Appender>);
 

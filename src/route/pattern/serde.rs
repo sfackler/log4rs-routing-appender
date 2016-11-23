@@ -1,11 +1,11 @@
 #[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
-const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
+const _IMPL_DESERIALIZE_FOR_PatternRouterConfig: () =
     {
         extern crate serde as _serde;
         #[automatically_derived]
-        impl _serde::de::Deserialize for MdcRouterConfig {
+        impl _serde::de::Deserialize for PatternRouterConfig {
             fn deserialize<__D>(deserializer: &mut __D)
-             -> ::std::result::Result<MdcRouterConfig, __D::Error> where
+             -> ::std::result::Result<PatternRouterConfig, __D::Error> where
              __D: _serde::de::Deserializer {
                 #[allow(non_camel_case_types)]
                 enum __Field { __field0, }
@@ -33,7 +33,7 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    "appender" => { Ok(__Field::__field0) }
+                                    "pattern" => { Ok(__Field::__field0) }
                                     _ =>
                                     Err(_serde::de::Error::unknown_field(value)),
                                 }
@@ -42,7 +42,7 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    b"appender" => { Ok(__Field::__field0) }
+                                    b"pattern" => { Ok(__Field::__field0) }
                                     _ => {
                                         let value =
                                             ::std::string::String::from_utf8_lossy(value);
@@ -59,10 +59,10 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                     type
                     Value
                     =
-                    MdcRouterConfig;
+                    PatternRouterConfig;
                     #[inline]
                     fn visit_seq<__V>(&mut self, mut visitor: __V)
-                     -> ::std::result::Result<MdcRouterConfig, __V::Error>
+                     -> ::std::result::Result<PatternRouterConfig, __V::Error>
                      where __V: _serde::de::SeqVisitor {
                         let __field0 =
                             match try!(visitor . visit :: < AppenderConfig > (
@@ -74,11 +74,11 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                                 }
                             };
                         try!(visitor . end (  ));
-                        Ok(MdcRouterConfig{appender: __field0,})
+                        Ok(PatternRouterConfig{pattern: __field0,})
                     }
                     #[inline]
                     fn visit_map<__V>(&mut self, mut visitor: __V)
-                     -> ::std::result::Result<MdcRouterConfig, __V::Error>
+                     -> ::std::result::Result<PatternRouterConfig, __V::Error>
                      where __V: _serde::de::MapVisitor {
                         let mut __field0: Option<AppenderConfig> = None;
                         while let Some(key) =
@@ -88,7 +88,7 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                                 __Field::__field0 => {
                                     if __field0.is_some() {
                                         return Err(<__V::Error as
-                                                       _serde::de::Error>::duplicate_field("appender"));
+                                                       _serde::de::Error>::duplicate_field("pattern"));
                                     }
                                     __field0 =
                                         Some(try!(visitor . visit_value :: <
@@ -101,17 +101,17 @@ const _IMPL_DESERIALIZE_FOR_MdcRouterConfig: () =
                             match __field0 {
                                 Some(__field0) => __field0,
                                 None =>
-                                try!(visitor . missing_field ( "appender" )),
+                                try!(visitor . missing_field ( "pattern" )),
                             };
-                        Ok(MdcRouterConfig{appender: __field0,})
+                        Ok(PatternRouterConfig{pattern: __field0,})
                     }
                 }
-                const FIELDS: &'static [&'static str] = &["appender"];
-                deserializer.deserialize_struct("MdcRouterConfig", FIELDS,
+                const FIELDS: &'static [&'static str] = &["pattern"];
+                deserializer.deserialize_struct("PatternRouterConfig", FIELDS,
                                                 __Visitor)
             }
         }
     };
-pub struct MdcRouterConfig {
-    appender: AppenderConfig,
+pub struct PatternRouterConfig {
+    pattern: AppenderConfig,
 }

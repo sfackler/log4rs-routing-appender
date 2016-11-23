@@ -14,7 +14,7 @@ use route::{Route, Cache, Appender, Entry};
 include!("serde.rs");
 
 lazy_static! {
-    static ref PATTERN: Regex = Regex::new("{mdc:([^}]+)}").unwrap();
+    static ref PATTERN: Regex = Regex::new("$mdc:([^$]+)$").unwrap();
 }
 
 fn get_keys(config: &Value, keys: &mut HashSet<String>) {
@@ -90,21 +90,21 @@ fn expand_config(config: &Value) -> Value {
     }
 }
 
-pub struct MdcRouter {
+pub struct PatternRouter {
     deserializers: Deserializers,
     kind: String,
     config: Value,
     keys: HashSet<String>,
 }
 
-impl fmt::Debug for MdcRouter {
+impl fmt::Debug for PatternRouter {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("MdcRouter")
+        fmt.debug_struct("PatternRouter")
             .finish()
     }
 }
 
-impl Route for MdcRouter {
+impl Route for PatternRouter {
     fn route(&self, _: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>> {
         match cache.entry(self.key()) {
             Entry::Occupied(e) => Ok(e.into_value()),
@@ -117,7 +117,7 @@ impl Route for MdcRouter {
     }
 }
 
-impl MdcRouter {
+impl PatternRouter {
     fn key(&self) -> String {
         let mut s = String::new();
         for key in &self.keys {
@@ -132,21 +132,21 @@ impl MdcRouter {
     }
 }
 
-impl Deserialize for MdcRouter {
+impl Deserialize for PatternRouter {
     type Trait = Route;
-    type Config = MdcRouterConfig;
+    type Config = PatternRouterConfig;
 
     fn deserialize(&self,
-                   config: MdcRouterConfig,
+                   config: PatternRouterConfig,
                    deserializers: &Deserializers)
                    -> Result<Box<Route>, Box<Error>> {
         let mut keys = HashSet::new();
-        get_keys(&config.appender.config, &mut keys);
+        get_keys(&config.pattern.config, &mut keys);
 
-        Ok(Box::new(MdcRouter {
+        Ok(Box::new(PatternRouter {
             deserializers: deserializers.clone(),
-            kind: config.appender.kind,
-            config: config.appender.config,
+            kind: config.pattern.kind,
+            config: config.pattern.config,
             keys: keys,
         }))
     }

@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 
 [features]
-mdc-router = ["file", "log-mdc", "serde-value", "regex", "lazy_static"]
+pattern-router = ["file", "log-mdc", "serde-value", "regex", "lazy_static"]
 
 file = ["log4rs/file", "serde"]
 
