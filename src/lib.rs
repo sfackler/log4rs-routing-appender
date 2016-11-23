@@ -36,4 +36,3 @@ impl Append for RoutingAppender {
 trait AppenderInner {
     fn appender(&self) -> &Append;
 }
-
