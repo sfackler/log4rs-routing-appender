@@ -1,13 +1,17 @@
 use log::LogRecord;
 use log_mdc;
-use log4rs::file::Deserializers;
+use log4rs::file::{Deserialize, Deserializers};
 use regex::{Regex, Captures};
+use serde::de;
 use serde_value::Value;
 use std::collections::{BTreeMap, HashSet};
 use std::error::Error;
 use std::fmt::{self, Write};
 
+
 use route::{Route, Cache, Appender, Entry};
+
+include!("serde.rs");
 
 lazy_static! {
     static ref PATTERN: Regex = Regex::new("{mdc:([^}]+)}").unwrap();
@@ -101,7 +105,7 @@ impl fmt::Debug for MdcRouter {
 }
 
 impl Route for MdcRouter {
-    fn route(&self, record: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>> {
+    fn route(&self, _: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>> {
         match cache.entry(self.key()) {
             Entry::Occupied(e) => Ok(e.into_value()),
             Entry::Vacant(e) => {
@@ -125,5 +129,48 @@ impl MdcRouter {
             });
         }
         s
+    }
+}
+
+impl Deserialize for MdcRouter {
+    type Trait = Route;
+    type Config = MdcRouterConfig;
+
+    fn deserialize(&self,
+                   config: MdcRouterConfig,
+                   deserializers: &Deserializers)
+                   -> Result<Box<Route>, Box<Error>> {
+        let mut keys = HashSet::new();
+        get_keys(&config.appender.config, &mut keys);
+
+        Ok(Box::new(MdcRouter {
+            deserializers: deserializers.clone(),
+            kind: config.appender.kind,
+            config: config.appender.config,
+            keys: keys,
+        }))
+    }
+}
+
+struct AppenderConfig {
+    kind: String,
+    config: Value,
+}
+
+impl de::Deserialize for AppenderConfig {
+    fn deserialize<D>(d: &mut D) -> Result<AppenderConfig, D::Error>
+        where D: de::Deserializer
+    {
+        let mut map = try!(BTreeMap::<Value, Value>::deserialize(d));
+
+        let kind = match map.remove(&Value::String("kind".to_owned())) {
+            Some(kind) => try!(kind.deserialize_into().map_err(|e| e.to_error())),
+            None => return Err(de::Error::missing_field("kind")),
+        };
+
+        Ok(AppenderConfig {
+            kind: kind,
+            config: Value::Map(map),
+        })
     }
 }

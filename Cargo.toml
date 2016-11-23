@@ -6,7 +6,7 @@ authors = ["Steven Fackler <sfackler@gmail.com>"]
 [features]
 mdc-router = ["file", "log-mdc", "serde-value", "regex", "lazy_static"]
 
-file = ["log4rs/file"]
+file = ["log4rs/file", "serde"]
 
 [dependencies]
 antidote = "1.0"
@@ -16,4 +16,5 @@ log-mdc = { version = "0.1", optional = true }
 log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false }
 lru-cache = "0.1"
 regex = { version = "0.1", optional = true }
+serde = { version = "0.8", optional = true }
 serde-value = { version = "0.3", optional = true }

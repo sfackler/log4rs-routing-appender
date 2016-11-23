@@ -5,12 +5,27 @@ use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
 
-use AppenderInner;
+#[cfg(feature = "file")]
+use log4rs::file::Deserializable;
+#[cfg(feature = "file")]
+use serde::de;
+#[cfg(feature = "file")]
+use serde_value::Value;
+#[cfg(feature = "file")]
+use std::collections::BTreeMap;
+
+use {CacheInner, AppenderInner};
 
 #[cfg(feature = "mdc-router")]
 pub mod mdc;
 
 pub struct Cache(LruCache<String, Appender>);
+
+impl CacheInner for Cache {
+    fn new(capacity: usize) -> Cache {
+        Cache(LruCache::new(capacity))
+    }
+}
 
 impl Cache {
     pub fn entry<'a>(&'a mut self, key: String) -> Entry<'a> {
@@ -66,4 +81,40 @@ impl AppenderInner for Appender {
 
 pub trait Route: fmt::Debug + 'static + Sync + Send {
     fn route(&self, record: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>>;
+}
+
+#[cfg(feature = "file")]
+impl Deserializable for Route {
+    fn name() -> &'static str {
+        "router"
+    }
+}
+
+/// Configuration for a router.
+#[derive(PartialEq, Eq, Debug)]
+#[cfg(feature = "file")]
+pub struct RouterConfig {
+    /// The router kind.
+    pub kind: String,
+    /// The router configuration.
+    pub config: Value,
+}
+
+#[cfg(feature = "file")]
+impl de::Deserialize for RouterConfig {
+    fn deserialize<D>(d: &mut D) -> Result<RouterConfig, D::Error>
+        where D: de::Deserializer
+    {
+        let mut map = try!(BTreeMap::<Value, Value>::deserialize(d));
+
+        let kind = match map.remove(&Value::String("kind".to_owned())) {
+            Some(kind) => try!(kind.deserialize_into().map_err(|e| e.to_error())),
+            None => return Err(de::Error::missing_field("kind")),
+        };
+
+        Ok(RouterConfig {
+            kind: kind,
+            config: Value::Map(map),
+        })
+    }
 }

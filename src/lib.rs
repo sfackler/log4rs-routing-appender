@@ -5,6 +5,8 @@ extern crate lru_cache;
 
 #[cfg(feature = "log-mdc")]
 extern crate log_mdc;
+#[cfg(feature = "serde")]
+extern crate serde;
 #[cfg(feature = "serde-value")]
 extern crate serde_value;
 #[cfg(feature = "lazy_static")]
@@ -19,9 +21,15 @@ use log4rs::append::Append;
 use std::error::Error;
 use std::fmt;
 
+#[cfg(feature = "file")]
+use log4rs::file::{Deserialize, Deserializers};
+
 use route::{Cache, Route};
 
 pub mod route;
+
+#[cfg(feature = "file")]
+include!("serde.rs");
 
 pub struct RoutingAppender {
     router: Box<Route>,
@@ -41,6 +49,28 @@ impl Append for RoutingAppender {
         let appender = self.router.route(record, &mut self.cache.lock())?;
         appender.appender().append(record)
     }
+}
+
+#[cfg(feature = "file")]
+impl Deserialize for RoutingAppender {
+    type Trait = Append;
+    type Config = RoutingAppenderConfig;
+
+    fn deserialize(&self,
+                   config: RoutingAppenderConfig,
+                   deserializers: &Deserializers)
+                   -> Result<Box<Append>, Box<Error>> {
+        let router = deserializers.deserialize(&config.router.kind, config.router.config)?;
+        let cache = Cache::new(config.cache.size);
+        Ok(Box::new(RoutingAppender {
+            router: router,
+            cache: Mutex::new(cache),
+        }))
+    }
+}
+
+trait CacheInner {
+    fn new(capacity: usize) -> Cache;
 }
 
 trait AppenderInner {
