@@ -24,7 +24,7 @@ use std::time::Duration;
 #[cfg(feature = "file")]
 use log4rs::file::{Deserialize, Deserializers};
 #[cfg(feature = "file")]
-use serde::de;
+use serde::de::{self, Deserialize as SerdeDeserialize};
 
 use route::{Cache, Route};
 
@@ -83,7 +83,7 @@ impl Deserialize for RoutingAppenderDeserializer {
 }
 
 #[cfg(feature = "file")]
-fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
+fn de_duration<D>(d: &mut D) -> Result<Duration, D::Error>
     where D: de::Deserializer
 {
     struct S(Duration);
@@ -110,7 +110,7 @@ fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
         }
     }
 
-    Option::<S>::deserialize(d).map(|r| r.map(|s| s.0))
+    S::deserialize(d).map(|d| d.0)
 }
 
 #[cfg(feature = "file")]

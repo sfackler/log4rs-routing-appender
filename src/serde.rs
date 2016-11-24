@@ -186,7 +186,9 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    "idle_time" => { Ok(__Field::__field0) }
+                                    "idle_timeout" => {
+                                        Ok(__Field::__field0)
+                                    }
                                     _ =>
                                     Err(_serde::de::Error::unknown_field(value)),
                                 }
@@ -195,7 +197,9 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    b"idle_time" => { Ok(__Field::__field0) }
+                                    b"idle_timeout" => {
+                                        Ok(__Field::__field0)
+                                    }
                                     _ => {
                                         let value =
                                             ::std::string::String::from_utf8_lossy(value);
@@ -250,7 +254,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                 }
                             };
                         try!(visitor . end (  ));
-                        Ok(CacheConfig{idle_time: __field0,})
+                        Ok(CacheConfig{idle_timeout: __field0,})
                     }
                     #[inline]
                     fn visit_map<__V>(&mut self, mut visitor: __V)
@@ -264,7 +268,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                 __Field::__field0 => {
                                     if __field0.is_some() {
                                         return Err(<__V::Error as
-                                                       _serde::de::Error>::duplicate_field("idle_time"));
+                                                       _serde::de::Error>::duplicate_field("idle_timeout"));
                                     }
                                     __field0 =
                                         Some(({
@@ -306,15 +310,15 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                 Some(__field0) => __field0,
                                 None => idle_time_default(),
                             };
-                        Ok(CacheConfig{idle_time: __field0,})
+                        Ok(CacheConfig{idle_timeout: __field0,})
                     }
                 }
-                const FIELDS: &'static [&'static str] = &["idle_time"];
+                const FIELDS: &'static [&'static str] = &["idle_timeout"];
                 deserializer.deserialize_struct("CacheConfig", FIELDS,
                                                 __Visitor)
             }
         }
     };
 pub struct CacheConfig {
-    idle_time: Duration,
+    idle_timeout: Duration,
 }

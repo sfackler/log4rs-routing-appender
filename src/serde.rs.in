@@ -10,5 +10,5 @@ pub struct RoutingAppenderConfig {
 #[serde(deny_unknown_fields)]
 pub struct CacheConfig {
     #[serde(deserialize_with = "de_duration", default = "idle_time_default")]
-    idle_time: Duration,
+    idle_timeout: Duration,
 }

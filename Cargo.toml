@@ -8,6 +8,8 @@ pattern-router = ["file", "log-mdc", "ordered-float"]
 
 file = ["log4rs/file", "serde", "serde-value", "humantime"]
 
+default = ["pattern-router", "file"]
+
 [dependencies]
 antidote = "1.0"
 humantime = { version = "1.0", optional = true }
