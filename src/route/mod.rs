@@ -53,9 +53,7 @@ impl Cache {
         };
 
         match entry {
-            Some(appender) => {
-                Entry::Occupied(OccupiedEntry(self, appender))
-            }
+            Some(appender) => Entry::Occupied(OccupiedEntry(self, appender)),
             None => {
                 Entry::Vacant(VacantEntry {
                     cache: self,
