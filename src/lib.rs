@@ -9,11 +9,8 @@ extern crate log_mdc;
 extern crate serde;
 #[cfg(feature = "serde-value")]
 extern crate serde_value;
-#[cfg(feature = "lazy_static")]
-#[macro_use]
-extern crate lazy_static;
-#[cfg(feature = "regex")]
-extern crate regex;
+#[cfg(feature = "ordered-float")]
+extern crate ordered_float;
 
 use antidote::Mutex;
 use log::LogRecord;
