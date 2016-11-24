@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 
 [features]
-pattern-router = ["file", "log-mdc", "serde-value", "ordered-float"]
+pattern-router = ["file", "log-mdc", "ordered-float"]
 
-file = ["log4rs/file", "serde"]
+file = ["log4rs/file", "serde", "serde-value"]
 
 [dependencies]
 antidote = "1.0"

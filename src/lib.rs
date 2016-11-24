@@ -28,6 +28,14 @@ pub mod route;
 #[cfg(feature = "file")]
 include!("serde.rs");
 
+#[cfg(feature = "file")]
+pub fn register(d: &mut Deserializers) {
+    d.insert("routing", RoutingAppenderDeserializer);
+
+    #[cfg(feature = "pattern-router")]
+    d.insert("pattern", route::pattern::PatternRouterDeserializer);
+}
+
 pub struct RoutingAppender {
     router: Box<Route>,
     cache: Mutex<Cache>,
