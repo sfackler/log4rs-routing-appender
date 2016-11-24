@@ -1,8 +1,10 @@
 extern crate antidote;
+extern crate linked_hash_map;
 extern crate log;
 extern crate log4rs;
-extern crate lru_cache;
 
+#[cfg(feature = "humantime")]
+extern crate humantime;
 #[cfg(feature = "log-mdc")]
 extern crate log_mdc;
 #[cfg(feature = "serde")]
@@ -17,9 +19,12 @@ use log::LogRecord;
 use log4rs::append::Append;
 use std::error::Error;
 use std::fmt;
+use std::time::Duration;
 
 #[cfg(feature = "file")]
 use log4rs::file::{Deserialize, Deserializers};
+#[cfg(feature = "file")]
+use serde::de;
 
 use route::{Cache, Route};
 
@@ -69,7 +74,7 @@ impl Deserialize for RoutingAppenderDeserializer {
                    deserializers: &Deserializers)
                    -> Result<Box<Append>, Box<Error>> {
         let router = deserializers.deserialize(&config.router.kind, config.router.config)?;
-        let cache = Cache::new(config.cache.size);
+        let cache = Cache::new(config.cache.idle_timeout);
         Ok(Box::new(RoutingAppender {
             router: router,
             cache: Mutex::new(cache),
@@ -77,8 +82,53 @@ impl Deserialize for RoutingAppenderDeserializer {
     }
 }
 
+#[cfg(feature = "file")]
+fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
+    where D: de::Deserializer
+{
+    struct S(Duration);
+
+    impl de::Deserialize for S {
+        fn deserialize<D>(d: &mut D) -> Result<S, D::Error>
+            where D: de::Deserializer
+        {
+            struct V;
+
+            impl de::Visitor for V {
+                type Value = S;
+
+                fn visit_str<E>(&mut self, v: &str) -> Result<S, E>
+                    where E: de::Error
+                {
+                    humantime::parse_duration(v)
+                        .map(S)
+                        .map_err(|e| E::invalid_value(&e.to_string()))
+                }
+            }
+
+            d.deserialize(V)
+        }
+    }
+
+    Option::<S>::deserialize(d).map(|r| r.map(|s| s.0))
+}
+
+#[cfg(feature = "file")]
+impl Default for CacheConfig {
+    fn default() -> CacheConfig {
+        CacheConfig {
+            idle_timeout: idle_time_default(),
+        }
+    }
+}
+
+#[cfg(feature = "file")]
+fn idle_time_default() -> Duration {
+    Duration::from_secs(2 * 60)
+}
+
 trait CacheInner {
-    fn new(capacity: usize) -> Cache;
+    fn new(expiration: Duration) -> Cache;
 }
 
 trait AppenderInner {

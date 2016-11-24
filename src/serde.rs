@@ -134,8 +134,7 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
                         let __field1 =
                             match __field1 {
                                 Some(__field1) => __field1,
-                                None =>
-                                try!(visitor . missing_field ( "cache" )),
+                                None => ::std::default::Default::default(),
                             };
                         Ok(RoutingAppenderConfig{router: __field0,
                                                  cache: __field1,})
@@ -187,7 +186,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    "size" => { Ok(__Field::__field0) }
+                                    "idle_time" => { Ok(__Field::__field0) }
                                     _ =>
                                     Err(_serde::de::Error::unknown_field(value)),
                                 }
@@ -196,7 +195,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                              -> ::std::result::Result<__Field, __E> where
                              __E: _serde::de::Error {
                                 match value {
-                                    b"size" => { Ok(__Field::__field0) }
+                                    b"idle_time" => { Ok(__Field::__field0) }
                                     _ => {
                                         let value =
                                             ::std::string::String::from_utf8_lossy(value);
@@ -219,7 +218,31 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                      -> ::std::result::Result<CacheConfig, __V::Error> where
                      __V: _serde::de::SeqVisitor {
                         let __field0 =
-                            match try!(visitor . visit :: < usize > (  )) {
+                            match {
+                                      struct __SerdeDeserializeWithStruct {
+                                          value: Duration,
+                                          phantom: ::std::marker::PhantomData<CacheConfig>,
+                                      }
+                                      impl _serde::de::Deserialize for
+                                       __SerdeDeserializeWithStruct {
+                                          fn deserialize<__D>(__d: &mut __D)
+                                           ->
+                                               ::std::result::Result<Self,
+                                                                     __D::Error>
+                                           where
+                                           __D: _serde::de::Deserializer {
+                                              let value =
+                                                  try!(de_duration ( __d ));
+                                              Ok(__SerdeDeserializeWithStruct{value:
+                                                                                  value,
+                                                                              phantom:
+                                                                                  ::std::marker::PhantomData,})
+                                          }
+                                      }
+                                      try!(visitor . visit :: <
+                                           __SerdeDeserializeWithStruct > (
+                                           )).map(|wrap| wrap.value)
+                                  } {
                                 Some(value) => { value }
                                 None => {
                                     try!(visitor . end (  ));
@@ -227,13 +250,13 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                 }
                             };
                         try!(visitor . end (  ));
-                        Ok(CacheConfig{size: __field0,})
+                        Ok(CacheConfig{idle_time: __field0,})
                     }
                     #[inline]
                     fn visit_map<__V>(&mut self, mut visitor: __V)
                      -> ::std::result::Result<CacheConfig, __V::Error> where
                      __V: _serde::de::MapVisitor {
-                        let mut __field0: Option<usize> = None;
+                        let mut __field0: Option<Duration> = None;
                         while let Some(key) =
                                   try!(visitor . visit_key :: < __Field > (
                                        )) {
@@ -241,11 +264,39 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                 __Field::__field0 => {
                                     if __field0.is_some() {
                                         return Err(<__V::Error as
-                                                       _serde::de::Error>::duplicate_field("size"));
+                                                       _serde::de::Error>::duplicate_field("idle_time"));
                                     }
                                     __field0 =
-                                        Some(try!(visitor . visit_value :: <
-                                                  usize > (  )));
+                                        Some(({
+                                                  struct __SerdeDeserializeWithStruct {
+                                                      value: Duration,
+                                                      phantom: ::std::marker::PhantomData<CacheConfig>,
+                                                  }
+                                                  impl _serde::de::Deserialize
+                                                   for
+                                                   __SerdeDeserializeWithStruct
+                                                   {
+                                                      fn deserialize<__D>(__d:
+                                                                              &mut __D)
+                                                       ->
+                                                           ::std::result::Result<Self,
+                                                                                 __D::Error>
+                                                       where
+                                                       __D: _serde::de::Deserializer {
+                                                          let value =
+                                                              try!(de_duration
+                                                                   ( __d ));
+                                                          Ok(__SerdeDeserializeWithStruct{value:
+                                                                                              value,
+                                                                                          phantom:
+                                                                                              ::std::marker::PhantomData,})
+                                                      }
+                                                  }
+                                                  try!(visitor . visit_value
+                                                       :: <
+                                                       __SerdeDeserializeWithStruct
+                                                       > (  )).value
+                                              }));
                                 }
                             }
                         }
@@ -253,18 +304,17 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                         let __field0 =
                             match __field0 {
                                 Some(__field0) => __field0,
-                                None =>
-                                try!(visitor . missing_field ( "size" )),
+                                None => idle_time_default(),
                             };
-                        Ok(CacheConfig{size: __field0,})
+                        Ok(CacheConfig{idle_time: __field0,})
                     }
                 }
-                const FIELDS: &'static [&'static str] = &["size"];
+                const FIELDS: &'static [&'static str] = &["idle_time"];
                 deserializer.deserialize_struct("CacheConfig", FIELDS,
                                                 __Visitor)
             }
         }
     };
 pub struct CacheConfig {
-    size: usize,
+    idle_time: Duration,
 }

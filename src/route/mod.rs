@@ -1,9 +1,10 @@
+use linked_hash_map::LinkedHashMap;
 use log::LogRecord;
 use log4rs::append::Append;
-use lru_cache::LruCache;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 #[cfg(feature = "file")]
 use log4rs::file::Deserializable;
@@ -19,20 +20,54 @@ use {CacheInner, AppenderInner};
 #[cfg(feature = "pattern-router")]
 pub mod pattern;
 
-pub struct Cache(LruCache<String, Appender>);
+struct TrackedAppender {
+    appender: Appender,
+    used: Instant,
+}
+
+pub struct Cache {
+    map: LinkedHashMap<String, TrackedAppender>,
+    ttl: Duration,
+}
 
 impl CacheInner for Cache {
-    fn new(capacity: usize) -> Cache {
-        Cache(LruCache::new(capacity))
+    fn new(ttl: Duration) -> Cache {
+        Cache {
+            map: LinkedHashMap::new(),
+            ttl: ttl,
+        }
     }
 }
 
 impl Cache {
     pub fn entry<'a>(&'a mut self, key: String) -> Entry<'a> {
-        let entry = self.0.get_mut(&key).map(|a| Appender(a.0.clone()));
+        let now = Instant::now();
+        self.purge(now);
+
+        let entry = match self.map.get_refresh(&key) {
+            Some(entry) => {
+                entry.used = now;
+                Some(Appender(entry.appender.0.clone()))
+            }
+            None => None,
+        };
+
         match entry {
-            Some(appender) => Entry::Occupied(OccupiedEntry(self, appender)),
+            Some(appender) => {
+                Entry::Occupied(OccupiedEntry(self, appender))
+            }
             None => Entry::Vacant(VacantEntry(self, key)),
+        }
+    }
+
+    fn purge(&mut self, now: Instant) {
+        let timeout = now - self.ttl;
+        loop {
+            match self.map.front() {
+                Some((_, v)) if v.used <= timeout => {}
+                _ => break,
+            }
+            self.map.pop_front();
         }
     }
 }
@@ -65,9 +100,13 @@ pub struct VacantEntry<'a>(&'a mut Cache, String);
 
 impl<'a> VacantEntry<'a> {
     pub fn insert(self, value: Box<Append>) -> Appender {
-        let appender = Appender(Arc::new(value));
-        (self.0).0.insert(self.1, Appender(appender.0.clone()));
-        appender
+        let appender = Arc::new(value);
+        let tracked = TrackedAppender {
+            appender: Appender(appender.clone()),
+            used: Instant::now(),
+        };
+        self.0.map.insert(self.1, tracked);
+        Appender(appender)
     }
 }
 
