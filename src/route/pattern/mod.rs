@@ -39,7 +39,9 @@ impl Route for PatternRouter {
     }
 }
 
-impl Deserialize for PatternRouter {
+pub struct PatternRouterDeserializer;
+
+impl Deserialize for PatternRouterDeserializer {
     type Trait = Route;
     type Config = PatternRouterConfig;
 

@@ -49,7 +49,10 @@ impl Append for RoutingAppender {
 }
 
 #[cfg(feature = "file")]
-impl Deserialize for RoutingAppender {
+pub struct RoutingAppenderDeserializer;
+
+#[cfg(feature = "file")]
+impl Deserialize for RoutingAppenderDeserializer {
     type Trait = Append;
     type Config = RoutingAppenderConfig;
 
