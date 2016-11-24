@@ -56,7 +56,13 @@ impl Cache {
             Some(appender) => {
                 Entry::Occupied(OccupiedEntry(self, appender))
             }
-            None => Entry::Vacant(VacantEntry(self, key)),
+            None => {
+                Entry::Vacant(VacantEntry {
+                    cache: self,
+                    key: key,
+                    time: now,
+                })
+            }
         }
     }
 
@@ -96,16 +102,20 @@ impl<'a> OccupiedEntry<'a> {
     }
 }
 
-pub struct VacantEntry<'a>(&'a mut Cache, String);
+pub struct VacantEntry<'a> {
+    cache: &'a mut Cache,
+    key: String,
+    time: Instant,
+}
 
 impl<'a> VacantEntry<'a> {
     pub fn insert(self, value: Box<Append>) -> Appender {
         let appender = Arc::new(value);
         let tracked = TrackedAppender {
             appender: Appender(appender.clone()),
-            used: Instant::now(),
+            used: self.time,
         };
-        self.0.map.insert(self.1, tracked);
+        self.cache.map.insert(self.key, tracked);
         Appender(appender)
     }
 }
