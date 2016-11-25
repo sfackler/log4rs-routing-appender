@@ -69,9 +69,13 @@ pub mod route;
 #[cfg(feature = "file")]
 include!("serde.rs");
 
-/// Registers deserializers for the components in this crate.
+/// Registers the following mappings:
 ///
-/// Requires the `file` feature (enabled by default).
+/// * Appenders
+///     * "routing" -> `RoutingAppenderDeserializer`
+/// * Routers
+///     * "pattern" -> `PatternAppenderDeserializer`
+///         * Requires the `pattern-router` feature (enabled by default).
 #[cfg(feature = "file")]
 pub fn register(d: &mut Deserializers) {
     d.insert("routing", RoutingAppenderDeserializer);
