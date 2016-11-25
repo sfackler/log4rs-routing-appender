@@ -225,7 +225,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                         let __field0 =
                             match {
                                       struct __SerdeDeserializeWithStruct {
-                                          value: Duration,
+                                          value: Option<Duration>,
                                           phantom: ::std::marker::PhantomData<CacheConfig>,
                                       }
                                       impl _serde::de::Deserialize for
@@ -261,7 +261,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                     fn visit_map<__V>(&mut self, mut visitor: __V)
                      -> ::std::result::Result<CacheConfig, __V::Error> where
                      __V: _serde::de::MapVisitor {
-                        let mut __field0: Option<Duration> = None;
+                        let mut __field0: Option<Option<Duration>> = None;
                         while let Some(key) =
                                   try!(visitor . visit_key :: < __Field > (
                                        )) {
@@ -274,7 +274,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                                     __field0 =
                                         Some(({
                                                   struct __SerdeDeserializeWithStruct {
-                                                      value: Duration,
+                                                      value: Option<Duration>,
                                                       phantom: ::std::marker::PhantomData<CacheConfig>,
                                                   }
                                                   impl _serde::de::Deserialize
@@ -309,7 +309,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
                         let __field0 =
                             match __field0 {
                                 Some(__field0) => __field0,
-                                None => idle_time_default(),
+                                None => ::std::default::Default::default(),
                             };
                         Ok(CacheConfig{idle_timeout: __field0,})
                     }
@@ -320,6 +320,7 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
             }
         }
     };
+#[derive(Default)]
 struct CacheConfig {
-    idle_timeout: Duration,
+    idle_timeout: Option<Duration>,
 }

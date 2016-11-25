@@ -7,9 +7,9 @@ pub struct RoutingAppenderConfig {
     cache: CacheConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 struct CacheConfig {
-    #[serde(deserialize_with = "de_duration", default = "idle_time_default")]
-    idle_timeout: Duration,
+    #[serde(deserialize_with = "de_duration", default)]
+    idle_timeout: Option<Duration>,
 }

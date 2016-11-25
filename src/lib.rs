@@ -101,6 +101,39 @@ impl Append for RoutingAppender {
     }
 }
 
+impl RoutingAppender {
+    /// Creates a new `RoutingAppender` builder.
+    pub fn builder() -> RoutingAppenderBuilder {
+        RoutingAppenderBuilder {
+            idle_timeout: Duration::from_secs(2 * 60),
+        }
+    }
+}
+
+/// A builder for `RoutingAppender`s.
+pub struct RoutingAppenderBuilder {
+    idle_timeout: Duration,
+}
+
+impl RoutingAppenderBuilder {
+    /// Sets the duration after which an appender that has not been used will be removed from the
+    /// cache.
+    ///
+    /// Defaults to 2 minutes.
+    pub fn idle_timeout(mut self, idle_timeout: Duration) -> RoutingAppenderBuilder {
+        self.idle_timeout = idle_timeout;
+        self
+    }
+
+    /// Consumes the builder, producing a `RoutingAppender`.
+    pub fn build(self, router: Box<Route>) -> RoutingAppender {
+        RoutingAppender {
+            router: router,
+            cache: Mutex::new(Cache::new(self.idle_timeout)),
+        }
+    }
+}
+
 /// A deserializer for the `RoutingAppender`.
 ///
 /// # Configuration
@@ -135,17 +168,17 @@ impl Deserialize for RoutingAppenderDeserializer {
                    config: RoutingAppenderConfig,
                    deserializers: &Deserializers)
                    -> Result<Box<Append>, Box<Error>> {
+        let mut builder = RoutingAppender::builder();
+        if let Some(idle_timeout) = config.cache.idle_timeout {
+            builder = builder.idle_timeout(idle_timeout);
+        }
         let router = deserializers.deserialize(&config.router.kind, config.router.config)?;
-        let cache = Cache::new(config.cache.idle_timeout);
-        Ok(Box::new(RoutingAppender {
-            router: router,
-            cache: Mutex::new(cache),
-        }))
+        Ok(Box::new(builder.build(router)))
     }
 }
 
 #[cfg(feature = "file")]
-fn de_duration<D>(d: &mut D) -> Result<Duration, D::Error>
+fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
     where D: de::Deserializer
 {
     struct S(Duration);
@@ -172,21 +205,7 @@ fn de_duration<D>(d: &mut D) -> Result<Duration, D::Error>
         }
     }
 
-    S::deserialize(d).map(|d| d.0)
-}
-
-#[cfg(feature = "file")]
-impl Default for CacheConfig {
-    fn default() -> CacheConfig {
-        CacheConfig {
-            idle_timeout: idle_time_default(),
-        }
-    }
-}
-
-#[cfg(feature = "file")]
-fn idle_time_default() -> Duration {
-    Duration::from_secs(2 * 60)
+    Option::<S>::deserialize(d).map(|d| d.map(|d| d.0))
 }
 
 trait CacheInner {
