@@ -146,6 +146,7 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
             }
         }
     };
+/// Configuration for the `RoutingAppender`.
 pub struct RoutingAppenderConfig {
     router: route::RouterConfig,
     cache: CacheConfig,
@@ -319,6 +320,6 @@ const _IMPL_DESERIALIZE_FOR_CacheConfig: () =
             }
         }
     };
-pub struct CacheConfig {
+struct CacheConfig {
     idle_timeout: Duration,
 }

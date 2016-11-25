@@ -112,6 +112,7 @@ const _IMPL_DESERIALIZE_FOR_PatternRouterConfig: () =
             }
         }
     };
+/// Configuration for the `PatternRouter`.
 pub struct PatternRouterConfig {
     pattern: AppenderConfig,
 }

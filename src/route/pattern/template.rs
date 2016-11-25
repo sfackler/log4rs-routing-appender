@@ -37,7 +37,7 @@ impl Template {
         s
     }
 
-    pub fn expand(&self) -> Value {
+    pub fn expand(&self) -> Result<Value, Box<Error>> {
         self.value.expand()
     }
 }
@@ -45,7 +45,10 @@ impl Template {
 #[derive(PartialOrd, Ord, PartialEq, Eq)]
 enum Chunk {
     Text(String),
-    Mdc(String),
+    Mdc {
+        key: String,
+        default: Option<String>,
+    },
 }
 
 enum ValueTemplate {
@@ -172,10 +175,13 @@ impl ValueTemplate {
                     let c = match piece {
                         Piece::Text(t) => Chunk::Text(t.to_owned()),
                         Piece::Argument { name: "mdc", args } => {
-                            if args.len() != 1 {
-                                return Err(format!("expected exactly 1 argument: `{}`", s).into());
+                            if args.is_empty() || args.len() > 2 {
+                                return Err(format!("expected 1 or 2 arguments: `{}`", s).into());
                             }
-                            Chunk::Mdc(args[0].to_owned())
+                            Chunk::Mdc {
+                                key: args[0].to_owned(),
+                                default: args.get(1).map(|&s| s.to_owned()),
+                            }
                         }
                         Piece::Argument { name, .. } => {
                             return Err(format!("unknown argument `{}`: `{}`", name, s).into());
@@ -255,7 +261,7 @@ impl ValueTemplate {
             }
             ValueTemplate::String(ref chunks) => {
                 for chunk in chunks {
-                    if let Chunk::Mdc(ref key) = *chunk {
+                    if let Chunk::Mdc { ref key, .. } = *chunk {
                         keys.insert(key.clone());
                     }
                 }
@@ -264,26 +270,47 @@ impl ValueTemplate {
         }
     }
 
-    fn expand(&self) -> Value {
-        match *self {
+    fn expand(&self) -> Result<Value, Box<Error>> {
+        let v = match *self {
             ValueTemplate::Map(ref m) => {
-                Value::Map(m.iter().map(|(k, v)| (k.expand(), v.expand())).collect())
+                let mut m2 = BTreeMap::new();
+                for (k, v) in m {
+                    m2.insert(k.expand()?, v.expand()?);
+                }
+                Value::Map(m2)
             }
-            ValueTemplate::Newtype(ref v) => Value::Newtype(Box::new(v.expand())),
-            ValueTemplate::Option(ref v) => Value::Option(v.as_ref().map(|v| Box::new(v.expand()))),
-            ValueTemplate::Seq(ref vs) => Value::Seq(vs.iter().map(|v| v.expand()).collect()),
+            ValueTemplate::Newtype(ref v) => Value::Newtype(Box::new(v.expand()?)),
+            ValueTemplate::Option(ref v) => {
+                match *v {
+                    Some(ref v) => Value::Option(Some(Box::new(v.expand()?))),
+                    None => Value::Option(None),
+                }
+            }
+            ValueTemplate::Seq(ref vs) => {
+                let mut vs2 = Vec::with_capacity(vs.len());
+                for v in vs {
+                    vs2.push(v.expand()?);
+                }
+                Value::Seq(vs2)
+            },
             ValueTemplate::String(ref chunks) => {
                 let mut s = String::new();
                 for chunk in chunks {
                     match *chunk {
                         Chunk::Text(ref t) => s.push_str(t),
-                        Chunk::Mdc(ref k) => {
-                            log_mdc::get(k, |v| {
-                                match v {
-                                    Some(v) => s.push_str(v),
-                                    None => s.push_str("<missing>"),
+                        Chunk::Mdc { ref key, ref default } => {
+                            log_mdc::get(key, |v| {
+                                match (v, default.as_ref().map(|s| &**s)) {
+                                    (Some(v), _) |
+                                    (None, Some(v)) => {
+                                        s.push_str(v);
+                                        Ok(())
+                                    }
+                                    (None, None) => {
+                                        Err(format!("MDC key `{}` not present", key))
+                                    }
                                 }
-                            })
+                            })?
                         }
                     }
                 }
@@ -306,7 +333,9 @@ impl ValueTemplate {
             ValueTemplate::Usize(i) => Value::Usize(i),
             ValueTemplate::Unit => Value::Unit,
             ValueTemplate::UnitStruct(n) => Value::UnitStruct(n),
-        }
+        };
+
+        Ok(v)
     }
 }
 

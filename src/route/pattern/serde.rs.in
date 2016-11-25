@@ -1,3 +1,4 @@
+/// Configuration for the `PatternRouter`.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PatternRouterConfig {

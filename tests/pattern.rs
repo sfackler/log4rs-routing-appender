@@ -15,8 +15,8 @@ use std::collections::HashMap;
 use std::error::Error;
 
 thread_local! {
-        static APPENDS: RefCell<Vec<u32>> = RefCell::new(vec![]);
-    }
+    static APPENDS: RefCell<Vec<u32>> = RefCell::new(vec![]);
+}
 
 #[derive(Debug)]
 struct TestAppender(u32);

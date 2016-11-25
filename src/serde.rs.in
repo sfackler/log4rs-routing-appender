@@ -1,3 +1,4 @@
+/// Configuration for the `RoutingAppender`.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RoutingAppenderConfig {
@@ -8,7 +9,7 @@ pub struct RoutingAppenderConfig {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct CacheConfig {
+struct CacheConfig {
     #[serde(deserialize_with = "de_duration", default = "idle_time_default")]
     idle_timeout: Duration,
 }

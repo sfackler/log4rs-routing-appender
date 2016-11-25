@@ -1,3 +1,6 @@
+//! Routers.
+//!
+//! A router determines the appender to which a log event should be sent.
 use linked_hash_map::LinkedHashMap;
 use log::LogRecord;
 use log4rs::append::Append;
@@ -25,6 +28,10 @@ struct TrackedAppender {
     used: Instant,
 }
 
+/// A cache of appenders.
+///
+/// It stores appenders identified by arbitrary strings. It is up to the router to decide how those
+/// strings are formatted.
 pub struct Cache {
     map: LinkedHashMap<String, TrackedAppender>,
     ttl: Duration,
@@ -40,6 +47,7 @@ impl CacheInner for Cache {
 }
 
 impl Cache {
+    /// Looks up the entry corresponding to the specified key.
     pub fn entry<'a>(&'a mut self, key: String) -> Entry<'a> {
         let now = Instant::now();
         self.purge(now);
@@ -76,12 +84,17 @@ impl Cache {
     }
 }
 
+/// A (possibly vacant) entry of a `Cache`.
 pub enum Entry<'a> {
+    /// An entry which is present in the `Cache`.
     Occupied(OccupiedEntry<'a>),
+    /// An entry which is not present in the `Cache`.
     Vacant(VacantEntry<'a>),
 }
 
 impl<'a> Entry<'a> {
+    /// Returns the value of the entry, using the provided closure to create and insert it if the
+    /// entry is not present in the cache.
     pub fn or_insert_with<F>(self, f: F) -> Appender
         where F: FnOnce() -> Box<Append>
     {
@@ -92,14 +105,17 @@ impl<'a> Entry<'a> {
     }
 }
 
+/// An entry which exists in the cache.
 pub struct OccupiedEntry<'a>(&'a mut Cache, Appender);
 
 impl<'a> OccupiedEntry<'a> {
+    /// Consumes the entry, returning the associated appender.
     pub fn into_value(self) -> Appender {
         self.1
     }
 }
 
+/// An entry which does not exist in the cache.
 pub struct VacantEntry<'a> {
     cache: &'a mut Cache,
     key: String,
@@ -107,6 +123,7 @@ pub struct VacantEntry<'a> {
 }
 
 impl<'a> VacantEntry<'a> {
+    /// Inserts an appender into the cache, returning the wrapped version of it.
     pub fn insert(self, value: Box<Append>) -> Appender {
         let appender = Arc::new(value);
         let tracked = TrackedAppender {
@@ -118,6 +135,7 @@ impl<'a> VacantEntry<'a> {
     }
 }
 
+/// An opaque, wrapped appender stored by the `Cache`.
 pub struct Appender(Arc<Box<Append>>);
 
 impl AppenderInner for Appender {
@@ -126,7 +144,9 @@ impl AppenderInner for Appender {
     }
 }
 
+/// A trait implemented by types that can route log events to appenders.
 pub trait Route: fmt::Debug + 'static + Sync + Send {
+    /// Returns the appender to which the provided log event should be routed.
     fn route(&self, record: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>>;
 }
 
