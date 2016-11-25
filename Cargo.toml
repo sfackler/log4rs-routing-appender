@@ -20,3 +20,6 @@ log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false 
 serde = { version = "0.8", optional = true }
 serde-value = { version = "0.3", optional = true }
 ordered-float = { version = "0.2", optional = true }
+
+[dev-dependencies]
+log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false, features = ["yaml_format"] }
