@@ -1,4 +1,4 @@
-#![cfg(feature = "file")]
+#![cfg(feature = "pattern-router")]
 
 #[macro_use]
 extern crate log;
@@ -45,7 +45,6 @@ impl Deserialize for TestAppenderDeserializer {
 }
 
 #[test]
-#[cfg(feature = "pattern-router")]
 fn pattern() {
     let mut d = Deserializers::new();
     register(&mut d);
