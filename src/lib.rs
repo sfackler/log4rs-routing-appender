@@ -20,7 +20,7 @@
 //!     - job
 //! ```
 //!
-//! ```rust
+//! ```ignore
 //! #[macro_use]
 //! extern crate log;
 //! extern crate log_mdc;
