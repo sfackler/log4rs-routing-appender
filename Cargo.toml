@@ -9,11 +9,11 @@ documentation = "https://sfackler.github.io/log4rs-routing-appender/doc/v0.1.0/l
 readme = "README.md"
 
 [features]
+default = ["pattern-router", "file"]
+
 pattern-router = ["file", "log-mdc", "ordered-float"]
 
 file = ["log4rs/file", "serde", "serde-value", "humantime"]
-
-default = ["pattern-router", "file"]
 
 [dependencies]
 antidote = "1.0"
@@ -21,10 +21,10 @@ humantime = { version = "1.0", optional = true }
 linked-hash-map = "0.3"
 log = "0.3"
 log-mdc = { version = "0.1", optional = true }
-log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false }
+log4rs = { version = "0.5.2", default_features = false }
 serde = { version = "0.8", optional = true }
 serde-value = { version = "0.3", optional = true }
 ordered-float = { version = "0.2", optional = true }
 
 [dev-dependencies]
-log4rs = { git = "https://github.com/sfackler/log4rs", default_features = false, features = ["yaml_format"] }
+log4rs = { version = "0.5.2", default_features = false, features = ["yaml_format"] }
