@@ -33,6 +33,7 @@
 //! info!("Starting job");
 //! # }
 //! ```
+#![doc(html_root_url="https://sfackler.github.io/log4rs-routing-appender/doc/v0.1.0")]
 #![warn(missing_docs)]
 extern crate antidote;
 extern crate linked_hash_map;
