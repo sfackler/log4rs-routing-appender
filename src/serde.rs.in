@@ -2,7 +2,7 @@
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RoutingAppenderConfig {
-    router: route::RouterConfig,
+    router: RouterConfig,
     #[serde(default)]
     cache: CacheConfig,
 }

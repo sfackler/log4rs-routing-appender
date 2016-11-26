@@ -70,8 +70,8 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
                                                __V::Error> where
                      __V: _serde::de::SeqVisitor {
                         let __field0 =
-                            match try!(visitor . visit :: <
-                                       route::RouterConfig > (  )) {
+                            match try!(visitor . visit :: < RouterConfig > (
+                                       )) {
                                 Some(value) => { value }
                                 None => {
                                     try!(visitor . end (  ));
@@ -97,7 +97,7 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
                          ::std::result::Result<RoutingAppenderConfig,
                                                __V::Error> where
                      __V: _serde::de::MapVisitor {
-                        let mut __field0: Option<route::RouterConfig> = None;
+                        let mut __field0: Option<RouterConfig> = None;
                         let mut __field1: Option<CacheConfig> = None;
                         while let Some(key) =
                                   try!(visitor . visit_key :: < __Field > (
@@ -110,8 +110,7 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
                                     }
                                     __field0 =
                                         Some(try!(visitor . visit_value :: <
-                                                  route::RouterConfig > (
-                                                  )));
+                                                  RouterConfig > (  )));
                                 }
                                 __Field::__field1 => {
                                     if __field1.is_some() {
@@ -148,7 +147,7 @@ const _IMPL_DESERIALIZE_FOR_RoutingAppenderConfig: () =
     };
 /// Configuration for the `RoutingAppender`.
 pub struct RoutingAppenderConfig {
-    router: route::RouterConfig,
+    router: RouterConfig,
     cache: CacheConfig,
 }
 

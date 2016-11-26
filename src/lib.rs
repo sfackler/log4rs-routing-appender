@@ -61,6 +61,10 @@ use std::time::Duration;
 use log4rs::file::{Deserialize, Deserializers};
 #[cfg(feature = "file")]
 use serde::de::{self, Deserialize as SerdeDeserialize};
+#[cfg(feature = "file")]
+use serde_value::Value;
+#[cfg(feature = "file")]
+use std::collections::BTreeMap;
 
 use route::{Cache, Route};
 
@@ -178,6 +182,32 @@ impl Deserialize for RoutingAppenderDeserializer {
         }
         let router = deserializers.deserialize(&config.router.kind, config.router.config)?;
         Ok(Box::new(builder.build(router)))
+    }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+#[cfg(feature = "file")]
+struct RouterConfig {
+    kind: String,
+    config: Value,
+}
+
+#[cfg(feature = "file")]
+impl de::Deserialize for RouterConfig {
+    fn deserialize<D>(d: &mut D) -> Result<RouterConfig, D::Error>
+        where D: de::Deserializer
+    {
+        let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
+
+        let kind = match map.remove(&Value::String("kind".to_owned())) {
+            Some(kind) => kind.deserialize_into().map_err(|e| e.to_error())?,
+            None => return Err(de::Error::missing_field("kind")),
+        };
+
+        Ok(RouterConfig {
+            kind: kind,
+            config: Value::Map(map),
+        })
     }
 }
 

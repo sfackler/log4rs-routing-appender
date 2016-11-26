@@ -11,12 +11,6 @@ use std::time::{Duration, Instant};
 
 #[cfg(feature = "file")]
 use log4rs::file::Deserializable;
-#[cfg(feature = "file")]
-use serde::de;
-#[cfg(feature = "file")]
-use serde_value::Value;
-#[cfg(feature = "file")]
-use std::collections::BTreeMap;
 
 use {CacheInner, AppenderInner};
 
@@ -154,34 +148,5 @@ pub trait Route: fmt::Debug + 'static + Sync + Send {
 impl Deserializable for Route {
     fn name() -> &'static str {
         "router"
-    }
-}
-
-/// Configuration for a router.
-#[derive(PartialEq, Eq, Debug)]
-#[cfg(feature = "file")]
-pub struct RouterConfig {
-    /// The router kind.
-    pub kind: String,
-    /// The router configuration.
-    pub config: Value,
-}
-
-#[cfg(feature = "file")]
-impl de::Deserialize for RouterConfig {
-    fn deserialize<D>(d: &mut D) -> Result<RouterConfig, D::Error>
-        where D: de::Deserializer
-    {
-        let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
-
-        let kind = match map.remove(&Value::String("kind".to_owned())) {
-            Some(kind) => kind.deserialize_into().map_err(|e| e.to_error())?,
-            None => return Err(de::Error::missing_field("kind")),
-        };
-
-        Ok(RouterConfig {
-            kind: kind,
-            config: Value::Map(map),
-        })
     }
 }
