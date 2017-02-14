@@ -1,11 +1,11 @@
 [package]
 name = "log4rs-routing-appender"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 description = "A routing appender for log4rs"
 license = "MIT/Apache-2.0"
 repository = "https://github.com/sfackler/log4rs-routing-appender"
-documentation = "https://sfackler.github.io/log4rs-routing-appender/doc/v0.1.0/log4rs_routing_appender"
+documentation = "https://sfackler.github.io/log4rs-routing-appender/doc/v0.2.0/log4rs_routing_appender"
 readme = "README.md"
 
 [features]
