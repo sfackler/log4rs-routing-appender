@@ -133,9 +133,7 @@ impl Append for RoutingAppender {
 impl RoutingAppender {
     /// Creates a new `RoutingAppender` builder.
     pub fn builder() -> RoutingAppenderBuilder {
-        RoutingAppenderBuilder {
-            idle_timeout: Duration::from_secs(2 * 60),
-        }
+        RoutingAppenderBuilder { idle_timeout: Duration::from_secs(2 * 60) }
     }
 }
 

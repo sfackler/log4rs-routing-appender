@@ -27,11 +27,9 @@ impl Template {
     pub fn key(&self) -> String {
         let mut s = String::new();
         for key in &self.keys {
-            log_mdc::get(key, |k| {
-                match k {
-                    Some(k) => write!(s, "{}{}", k.len(), k).unwrap(),
-                    None => s.push('-'),
-                }
+            log_mdc::get(key, |k| match k {
+                Some(k) => write!(s, "{}{}", k.len(), k).unwrap(),
+                None => s.push('-'),
             });
         }
         s
@@ -87,8 +85,10 @@ impl PartialEq for ValueTemplate {
             (&ValueTemplate::I16(v0), &ValueTemplate::I16(v1)) if v0 == v1 => true,
             (&ValueTemplate::I32(v0), &ValueTemplate::I32(v1)) if v0 == v1 => true,
             (&ValueTemplate::I64(v0), &ValueTemplate::I64(v1)) if v0 == v1 => true,
-            (&ValueTemplate::F32(v0), &ValueTemplate::F32(v1)) if OrderedFloat(v0) == OrderedFloat(v1) => true,
-            (&ValueTemplate::F64(v0), &ValueTemplate::F64(v1)) if OrderedFloat(v0) == OrderedFloat(v1) => true,
+            (&ValueTemplate::F32(v0), &ValueTemplate::F32(v1)) if OrderedFloat(v0) ==
+                                                                  OrderedFloat(v1) => true,
+            (&ValueTemplate::F64(v0), &ValueTemplate::F64(v1)) if OrderedFloat(v0) ==
+                                                                  OrderedFloat(v1) => true,
             (&ValueTemplate::Char(v0), &ValueTemplate::Char(v1)) if v0 == v1 => true,
             (&ValueTemplate::String(ref v0), &ValueTemplate::String(ref v1)) if v0 == v1 => true,
             (&ValueTemplate::Unit, &ValueTemplate::Unit) => true,
@@ -120,8 +120,12 @@ impl Ord for ValueTemplate {
             (&ValueTemplate::I16(v0), &ValueTemplate::I16(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::I32(v0), &ValueTemplate::I32(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::I64(v0), &ValueTemplate::I64(ref v1)) => v0.cmp(v1),
-            (&ValueTemplate::F32(v0), &ValueTemplate::F32(v1)) => OrderedFloat(v0).cmp(&OrderedFloat(v1)),
-            (&ValueTemplate::F64(v0), &ValueTemplate::F64(v1)) => OrderedFloat(v0).cmp(&OrderedFloat(v1)),
+            (&ValueTemplate::F32(v0), &ValueTemplate::F32(v1)) => {
+                OrderedFloat(v0).cmp(&OrderedFloat(v1))
+            }
+            (&ValueTemplate::F64(v0), &ValueTemplate::F64(v1)) => {
+                OrderedFloat(v0).cmp(&OrderedFloat(v1))
+            }
             (&ValueTemplate::Char(v0), &ValueTemplate::Char(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::String(ref v0), &ValueTemplate::String(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::Unit, &ValueTemplate::Unit) => Ordering::Equal,
@@ -277,24 +281,19 @@ impl ValueTemplate {
                     vs2.push(v.expand()?);
                 }
                 Value::Seq(vs2)
-            },
+            }
             ValueTemplate::String(ref chunks) => {
                 let mut s = String::new();
                 for chunk in chunks {
                     match *chunk {
                         Chunk::Text(ref t) => s.push_str(t),
                         Chunk::Mdc { ref key, ref default } => {
-                            log_mdc::get(key, |v| {
-                                match (v, default.as_ref().map(|s| &**s)) {
-                                    (Some(v), _) |
-                                    (None, Some(v)) => {
-                                        s.push_str(v);
-                                        Ok(())
-                                    }
-                                    (None, None) => {
-                                        Err(format!("MDC key `{}` not present", key))
-                                    }
+                            log_mdc::get(key, |v| match (v, default.as_ref().map(|s| &**s)) {
+                                (Some(v), _) | (None, Some(v)) => {
+                                    s.push_str(v);
+                                    Ok(())
                                 }
+                                (None, None) => Err(format!("MDC key `{}` not present", key)),
                             })?
                         }
                     }
@@ -320,4 +319,3 @@ impl ValueTemplate {
         Ok(v)
     }
 }
-

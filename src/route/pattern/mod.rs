@@ -70,7 +70,10 @@ impl fmt::Debug for PatternRouter {
 }
 
 impl Route for PatternRouter {
-    fn route(&self, _: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error + Sync + Send>> {
+    fn route(&self,
+             _: &LogRecord,
+             cache: &mut Cache)
+             -> Result<Appender, Box<Error + Sync + Send>> {
         match cache.entry(self.config.key()) {
             Entry::Occupied(e) => Ok(e.into_value()),
             Entry::Vacant(e) => {

@@ -3,10 +3,7 @@ use std::str::CharIndices;
 
 pub enum Piece<'a> {
     Text(&'a str),
-    Argument {
-        name: &'a str,
-        args: Vec<&'a str>,
-    },
+    Argument { name: &'a str, args: Vec<&'a str> },
     Error(&'static str),
 }
 
@@ -29,7 +26,7 @@ impl<'a> Parser<'a> {
                 self.it.next();
                 true
             }
-            _ => false
+            _ => false,
         }
     }
 
