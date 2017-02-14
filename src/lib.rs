@@ -51,6 +51,10 @@ extern crate serde_value;
 #[cfg(feature = "ordered-float")]
 extern crate ordered_float;
 
+#[cfg(feature = "serde_derive")]
+#[macro_use]
+extern crate serde_derive;
+
 use antidote::Mutex;
 use log::LogRecord;
 use log4rs::append::Append;
@@ -71,8 +75,24 @@ use route::{Cache, Route};
 
 pub mod route;
 
+/// Configuration for the `RoutingAppender`.
 #[cfg(feature = "file")]
-include!("serde.rs");
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RoutingAppenderConfig {
+    router: RouterConfig,
+    #[serde(default)]
+    cache: CacheConfig,
+}
+
+#[cfg(feature = "file")]
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+struct CacheConfig {
+    #[serde(deserialize_with = "de_duration", default)]
+    idle_timeout: Option<Duration>,
+}
+
 
 /// Registers the following mappings:
 ///
@@ -104,7 +124,7 @@ impl fmt::Debug for RoutingAppender {
 }
 
 impl Append for RoutingAppender {
-    fn append(&self, record: &LogRecord) -> Result<(), Box<Error>> {
+    fn append(&self, record: &LogRecord) -> Result<(), Box<Error + Sync + Send>> {
         let appender = self.router.route(record, &mut self.cache.lock())?;
         appender.appender().append(record)
     }
@@ -176,7 +196,7 @@ impl Deserialize for RoutingAppenderDeserializer {
     fn deserialize(&self,
                    config: RoutingAppenderConfig,
                    deserializers: &Deserializers)
-                   -> Result<Box<Append>, Box<Error>> {
+                   -> Result<Box<Append>, Box<Error + Sync + Send>> {
         let mut builder = RoutingAppender::builder();
         if let Some(idle_timeout) = config.cache.idle_timeout {
             builder = builder.idle_timeout(idle_timeout);
@@ -195,7 +215,7 @@ struct RouterConfig {
 
 #[cfg(feature = "file")]
 impl de::Deserialize for RouterConfig {
-    fn deserialize<D>(d: &mut D) -> Result<RouterConfig, D::Error>
+    fn deserialize<D>(d: D) -> Result<RouterConfig, D::Error>
         where D: de::Deserializer
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
@@ -213,13 +233,13 @@ impl de::Deserialize for RouterConfig {
 }
 
 #[cfg(feature = "file")]
-fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
+fn de_duration<D>(d: D) -> Result<Option<Duration>, D::Error>
     where D: de::Deserializer
 {
     struct S(Duration);
 
     impl de::Deserialize for S {
-        fn deserialize<D>(d: &mut D) -> Result<S, D::Error>
+        fn deserialize<D>(d: D) -> Result<S, D::Error>
             where D: de::Deserializer
         {
             struct V;
@@ -227,12 +247,16 @@ fn de_duration<D>(d: &mut D) -> Result<Option<Duration>, D::Error>
             impl de::Visitor for V {
                 type Value = S;
 
-                fn visit_str<E>(&mut self, v: &str) -> Result<S, E>
+                fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+                    fmt.write_str("a duration")
+                }
+
+                fn visit_str<E>(self, v: &str) -> Result<S, E>
                     where E: de::Error
                 {
                     humantime::parse_duration(v)
                         .map(S)
-                        .map_err(|e| E::invalid_value(&e.to_string()))
+                        .map_err(|e| E::custom(&e.to_string()))
                 }
             }
 

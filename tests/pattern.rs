@@ -7,9 +7,11 @@ extern crate log4rs;
 extern crate log4rs_routing_appender;
 extern crate serde;
 extern crate serde_value;
+extern crate serde_yaml;
 
 use log::LogRecord;
-use log4rs::file::{Deserialize, Deserializers, Config, Format};
+use log4rs::file::{Deserialize, Deserializers, RawConfig};
+use log4rs::config::Config;
 use log4rs::append::Append;
 use log4rs_routing_appender::register;
 use std::cell::RefCell;
@@ -24,7 +26,7 @@ thread_local! {
 struct TestAppender(u32);
 
 impl Append for TestAppender {
-    fn append(&self, _: &LogRecord) -> Result<(), Box<Error>> {
+    fn append(&self, _: &LogRecord) -> Result<(), Box<Error + Sync + Send>> {
         APPENDS.with(|a| a.borrow_mut().push(self.0));
         Ok(())
     }
@@ -39,7 +41,7 @@ impl Deserialize for TestAppenderDeserializer {
     fn deserialize(&self,
                    config: HashMap<String, String>,
                    _: &Deserializers)
-                   -> Result<Box<Append>, Box<Error>> {
+                   -> Result<Box<Append>, Box<Error + Sync + Send>> {
         Ok(Box::new(TestAppender(config["key"].parse().unwrap())))
     }
 }
@@ -64,9 +66,15 @@ root:
   appenders:
   - router
 "#;
-    let config = Config::parse(config, Format::Yaml, &d).unwrap();
-    assert!(config.errors().is_empty(), "{:?}", config.errors());
-    log4rs::init_config(config.into_config()).unwrap();
+    let config = serde_yaml::from_str::<RawConfig>(config).unwrap();
+    let (appenders, errors) = config.appenders_lossy(&d);
+    assert!(errors.is_empty());
+    let config = Config::builder()
+        .appenders(appenders)
+        .loggers(config.loggers())
+        .build(config.root())
+        .unwrap();
+    log4rs::init_config(config).unwrap();
 
     log_mdc::insert("key", "0");
     error!("");

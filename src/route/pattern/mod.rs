@@ -48,7 +48,12 @@ use route::pattern::template::Template;
 mod parser;
 mod template;
 
-include!("serde.rs");
+/// Configuration for the `PatternRouter`.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PatternRouterConfig {
+    pattern: AppenderConfig,
+}
 
 /// A router which expands an appender configuration template.
 pub struct PatternRouter {
@@ -65,7 +70,7 @@ impl fmt::Debug for PatternRouter {
 }
 
 impl Route for PatternRouter {
-    fn route(&self, _: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>> {
+    fn route(&self, _: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error + Sync + Send>> {
         match cache.entry(self.config.key()) {
             Entry::Occupied(e) => Ok(e.into_value()),
             Entry::Vacant(e) => {
@@ -97,7 +102,7 @@ impl Deserialize for PatternRouterDeserializer {
     fn deserialize(&self,
                    config: PatternRouterConfig,
                    deserializers: &Deserializers)
-                   -> Result<Box<Route>, Box<Error>> {
+                   -> Result<Box<Route>, Box<Error + Sync + Send>> {
         Ok(Box::new(PatternRouter {
             deserializers: deserializers.clone(),
             kind: config.pattern.kind,
@@ -112,7 +117,7 @@ struct AppenderConfig {
 }
 
 impl de::Deserialize for AppenderConfig {
-    fn deserialize<D>(d: &mut D) -> Result<AppenderConfig, D::Error>
+    fn deserialize<D>(d: D) -> Result<AppenderConfig, D::Error>
         where D: de::Deserializer
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;

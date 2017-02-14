@@ -141,7 +141,7 @@ impl AppenderInner for Appender {
 /// A trait implemented by types that can route log events to appenders.
 pub trait Route: fmt::Debug + 'static + Sync + Send {
     /// Returns the appender to which the provided log event should be routed.
-    fn route(&self, record: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error>>;
+    fn route(&self, record: &LogRecord, cache: &mut Cache) -> Result<Appender, Box<Error + Sync + Send>>;
 }
 
 #[cfg(feature = "file")]

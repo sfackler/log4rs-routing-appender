@@ -14,7 +14,7 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn new(pattern: &Value) -> Result<Template, Box<Error>> {
+    pub fn new(pattern: &Value) -> Result<Template, Box<Error + Sync + Send>> {
         let value = ValueTemplate::new(pattern)?;
         let mut keys = HashSet::new();
         value.keys(&mut keys);
@@ -37,7 +37,7 @@ impl Template {
         s
     }
 
-    pub fn expand(&self) -> Result<Value, Box<Error>> {
+    pub fn expand(&self) -> Result<Value, Box<Error + Sync + Send>> {
         self.value.expand()
     }
 }
@@ -66,14 +66,11 @@ enum ValueTemplate {
     I16(i16),
     I32(i32),
     I64(i64),
-    Isize(isize),
     U8(u8),
     U16(u16),
     U32(u32),
     U64(u64),
-    Usize(usize),
     Unit,
-    UnitStruct(&'static str),
 }
 
 impl Eq for ValueTemplate {}
@@ -82,12 +79,10 @@ impl PartialEq for ValueTemplate {
     fn eq(&self, rhs: &Self) -> bool {
         match (self, rhs) {
             (&ValueTemplate::Bool(v0), &ValueTemplate::Bool(v1)) if v0 == v1 => true,
-            (&ValueTemplate::Usize(v0), &ValueTemplate::Usize(v1)) if v0 == v1 => true,
             (&ValueTemplate::U8(v0), &ValueTemplate::U8(v1)) if v0 == v1 => true,
             (&ValueTemplate::U16(v0), &ValueTemplate::U16(v1)) if v0 == v1 => true,
             (&ValueTemplate::U32(v0), &ValueTemplate::U32(v1)) if v0 == v1 => true,
             (&ValueTemplate::U64(v0), &ValueTemplate::U64(v1)) if v0 == v1 => true,
-            (&ValueTemplate::Isize(v0), &ValueTemplate::Isize(v1)) if v0 == v1 => true,
             (&ValueTemplate::I8(v0), &ValueTemplate::I8(v1)) if v0 == v1 => true,
             (&ValueTemplate::I16(v0), &ValueTemplate::I16(v1)) if v0 == v1 => true,
             (&ValueTemplate::I32(v0), &ValueTemplate::I32(v1)) if v0 == v1 => true,
@@ -97,7 +92,6 @@ impl PartialEq for ValueTemplate {
             (&ValueTemplate::Char(v0), &ValueTemplate::Char(v1)) if v0 == v1 => true,
             (&ValueTemplate::String(ref v0), &ValueTemplate::String(ref v1)) if v0 == v1 => true,
             (&ValueTemplate::Unit, &ValueTemplate::Unit) => true,
-            (&ValueTemplate::UnitStruct(v0), &ValueTemplate::UnitStruct(v1)) if v0 == v1 => true,
             (&ValueTemplate::Option(ref v0), &ValueTemplate::Option(ref v1)) if v0 == v1 => true,
             (&ValueTemplate::Newtype(ref v0), &ValueTemplate::Newtype(ref v1)) if v0 == v1 => true,
             (&ValueTemplate::Seq(ref v0), &ValueTemplate::Seq(ref v1)) if v0 == v1 => true,
@@ -118,12 +112,10 @@ impl Ord for ValueTemplate {
     fn cmp(&self, rhs: &Self) -> Ordering {
         match (self, rhs) {
             (&ValueTemplate::Bool(v0), &ValueTemplate::Bool(ref v1)) => v0.cmp(v1),
-            (&ValueTemplate::Usize(v0), &ValueTemplate::Usize(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::U8(v0), &ValueTemplate::U8(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::U16(v0), &ValueTemplate::U16(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::U32(v0), &ValueTemplate::U32(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::U64(v0), &ValueTemplate::U64(ref v1)) => v0.cmp(v1),
-            (&ValueTemplate::Isize(v0), &ValueTemplate::Isize(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::I8(v0), &ValueTemplate::I8(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::I16(v0), &ValueTemplate::I16(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::I32(v0), &ValueTemplate::I32(ref v1)) => v0.cmp(v1),
@@ -133,7 +125,6 @@ impl Ord for ValueTemplate {
             (&ValueTemplate::Char(v0), &ValueTemplate::Char(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::String(ref v0), &ValueTemplate::String(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::Unit, &ValueTemplate::Unit) => Ordering::Equal,
-            (&ValueTemplate::UnitStruct(v0), &ValueTemplate::UnitStruct(v1)) => v0.cmp(v1),
             (&ValueTemplate::Option(ref v0), &ValueTemplate::Option(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::Newtype(ref v0), &ValueTemplate::Newtype(ref v1)) => v0.cmp(v1),
             (&ValueTemplate::Seq(ref v0), &ValueTemplate::Seq(ref v1)) => v0.cmp(v1),
@@ -145,7 +136,7 @@ impl Ord for ValueTemplate {
 }
 
 impl ValueTemplate {
-    fn new(value: &Value) -> Result<ValueTemplate, Box<Error>> {
+    fn new(value: &Value) -> Result<ValueTemplate, Box<Error + Sync + Send>> {
         let value = match *value {
             Value::Map(ref m) => {
                 let mut m2 = BTreeMap::new();
@@ -201,14 +192,11 @@ impl ValueTemplate {
             Value::I16(i) => ValueTemplate::I16(i),
             Value::I32(i) => ValueTemplate::I32(i),
             Value::I64(i) => ValueTemplate::I64(i),
-            Value::Isize(i) => ValueTemplate::Isize(i),
             Value::U8(u) => ValueTemplate::U8(u),
             Value::U16(u) => ValueTemplate::U16(u),
             Value::U32(u) => ValueTemplate::U32(u),
             Value::U64(u) => ValueTemplate::U64(u),
-            Value::Usize(u) => ValueTemplate::Usize(u),
             Value::Unit => ValueTemplate::Unit,
-            Value::UnitStruct(s) => ValueTemplate::UnitStruct(s),
         };
         Ok(value)
     }
@@ -216,27 +204,24 @@ impl ValueTemplate {
     fn discriminant(&self) -> usize {
         match *self {
             ValueTemplate::Bool(..) => 0,
-            ValueTemplate::Usize(..) => 1,
-            ValueTemplate::U8(..) => 2,
-            ValueTemplate::U16(..) => 3,
-            ValueTemplate::U32(..) => 4,
-            ValueTemplate::U64(..) => 5,
-            ValueTemplate::Isize(..) => 6,
-            ValueTemplate::I8(..) => 7,
-            ValueTemplate::I16(..) => 8,
-            ValueTemplate::I32(..) => 9,
-            ValueTemplate::I64(..) => 10,
-            ValueTemplate::F32(..) => 11,
-            ValueTemplate::F64(..) => 12,
-            ValueTemplate::Char(..) => 13,
-            ValueTemplate::String(..) => 14,
-            ValueTemplate::Unit => 15,
-            ValueTemplate::UnitStruct(..) => 16,
-            ValueTemplate::Option(..) => 17,
-            ValueTemplate::Newtype(..) => 18,
-            ValueTemplate::Seq(..) => 19,
-            ValueTemplate::Map(..) => 20,
-            ValueTemplate::Bytes(..) => 21,
+            ValueTemplate::U8(..) => 1,
+            ValueTemplate::U16(..) => 2,
+            ValueTemplate::U32(..) => 3,
+            ValueTemplate::U64(..) => 4,
+            ValueTemplate::I8(..) => 5,
+            ValueTemplate::I16(..) => 6,
+            ValueTemplate::I32(..) => 7,
+            ValueTemplate::I64(..) => 8,
+            ValueTemplate::F32(..) => 9,
+            ValueTemplate::F64(..) => 10,
+            ValueTemplate::Char(..) => 11,
+            ValueTemplate::String(..) => 12,
+            ValueTemplate::Unit => 13,
+            ValueTemplate::Option(..) => 14,
+            ValueTemplate::Newtype(..) => 15,
+            ValueTemplate::Seq(..) => 16,
+            ValueTemplate::Map(..) => 17,
+            ValueTemplate::Bytes(..) => 18,
         }
     }
 
@@ -270,7 +255,7 @@ impl ValueTemplate {
         }
     }
 
-    fn expand(&self) -> Result<Value, Box<Error>> {
+    fn expand(&self) -> Result<Value, Box<Error + Sync + Send>> {
         let v = match *self {
             ValueTemplate::Map(ref m) => {
                 let mut m2 = BTreeMap::new();
@@ -325,14 +310,11 @@ impl ValueTemplate {
             ValueTemplate::I16(i) => Value::I16(i),
             ValueTemplate::I32(i) => Value::I32(i),
             ValueTemplate::I64(i) => Value::I64(i),
-            ValueTemplate::Isize(i) => Value::Isize(i),
             ValueTemplate::U8(i) => Value::U8(i),
             ValueTemplate::U16(i) => Value::U16(i),
             ValueTemplate::U32(i) => Value::U32(i),
             ValueTemplate::U64(i) => Value::U64(i),
-            ValueTemplate::Usize(i) => Value::Usize(i),
             ValueTemplate::Unit => Value::Unit,
-            ValueTemplate::UnitStruct(n) => Value::UnitStruct(n),
         };
 
         Ok(v)

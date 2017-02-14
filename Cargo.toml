@@ -13,7 +13,7 @@ default = ["pattern-router", "file"]
 
 pattern-router = ["file", "log-mdc", "ordered-float"]
 
-file = ["log4rs/file", "serde", "serde-value", "humantime"]
+file = ["log4rs/file", "serde", "serde_derive", "serde-value", "humantime"]
 
 [dependencies]
 antidote = "1.0"
@@ -21,10 +21,12 @@ humantime = { version = "1.0", optional = true }
 linked-hash-map = "0.3"
 log = "0.3"
 log-mdc = { version = "0.1", optional = true }
-log4rs = { version = "0.5.2", default_features = false }
-serde = { version = "0.8", optional = true }
-serde-value = { version = "0.3", optional = true }
+log4rs = { version = "0.6", default_features = false }
+serde = { version = "0.9", optional = true }
+serde_derive = { version = "0.9", optional = true }
+serde-value = { version = "0.4", optional = true }
 ordered-float = { version = "0.2", optional = true }
 
 [dev-dependencies]
-log4rs = { version = "0.5.2", default_features = false, features = ["yaml_format"] }
+log4rs = { version = "0.6", default_features = false, features = ["file"] }
+serde_yaml = "0.6"
