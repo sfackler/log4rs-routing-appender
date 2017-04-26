@@ -119,9 +119,9 @@ struct AppenderConfig {
     config: Value,
 }
 
-impl de::Deserialize for AppenderConfig {
+impl<'de> de::Deserialize<'de> for AppenderConfig {
     fn deserialize<D>(d: D) -> Result<AppenderConfig, D::Error>
-        where D: de::Deserializer
+        where D: de::Deserializer<'de>
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
 

@@ -212,9 +212,9 @@ struct RouterConfig {
 }
 
 #[cfg(feature = "file")]
-impl de::Deserialize for RouterConfig {
+impl<'de> de::Deserialize<'de> for RouterConfig {
     fn deserialize<D>(d: D) -> Result<RouterConfig, D::Error>
-        where D: de::Deserializer
+        where D: de::Deserializer<'de>
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
 
@@ -231,18 +231,18 @@ impl de::Deserialize for RouterConfig {
 }
 
 #[cfg(feature = "file")]
-fn de_duration<D>(d: D) -> Result<Option<Duration>, D::Error>
-    where D: de::Deserializer
+fn de_duration<'de, D>(d: D) -> Result<Option<Duration>, D::Error>
+    where D: de::Deserializer<'de>
 {
     struct S(Duration);
 
-    impl de::Deserialize for S {
+    impl<'de2> de::Deserialize<'de2> for S {
         fn deserialize<D>(d: D) -> Result<S, D::Error>
-            where D: de::Deserializer
+            where D: de::Deserializer<'de2>
         {
             struct V;
 
-            impl de::Visitor for V {
+            impl<'de3> de::Visitor<'de3> for V {
                 type Value = S;
 
                 fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -258,7 +258,7 @@ fn de_duration<D>(d: D) -> Result<Option<Duration>, D::Error>
                 }
             }
 
-            d.deserialize(V)
+            d.deserialize_str(V)
         }
     }
 
