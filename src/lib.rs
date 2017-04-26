@@ -33,7 +33,7 @@
 //! info!("Starting job");
 //! # }
 //! ```
-#![doc(html_root_url="https://docs.rs/log4rs-routing-appender/0.2.0")]
+#![doc(html_root_url="https://docs.rs/log4rs-routing-appender/0.3.0")]
 #![warn(missing_docs)]
 extern crate antidote;
 extern crate linked_hash_map;
