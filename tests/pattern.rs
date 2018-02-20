@@ -2,14 +2,14 @@
 
 #[macro_use]
 extern crate log;
-extern crate log_mdc;
 extern crate log4rs;
 extern crate log4rs_routing_appender;
+extern crate log_mdc;
 extern crate serde;
 extern crate serde_value;
 extern crate serde_yaml;
 
-use log::LogRecord;
+use log::Record;
 use log4rs::file::{Deserialize, Deserializers, RawConfig};
 use log4rs::config::Config;
 use log4rs::append::Append;
@@ -26,10 +26,12 @@ thread_local! {
 struct TestAppender(u32);
 
 impl Append for TestAppender {
-    fn append(&self, _: &LogRecord) -> Result<(), Box<Error + Sync + Send>> {
+    fn append(&self, _: &Record) -> Result<(), Box<Error + Sync + Send>> {
         APPENDS.with(|a| a.borrow_mut().push(self.0));
         Ok(())
     }
+
+    fn flush(&self) {}
 }
 
 struct TestAppenderDeserializer;
@@ -38,10 +40,11 @@ impl Deserialize for TestAppenderDeserializer {
     type Config = HashMap<String, String>;
     type Trait = Append;
 
-    fn deserialize(&self,
-                   config: HashMap<String, String>,
-                   _: &Deserializers)
-                   -> Result<Box<Append>, Box<Error + Sync + Send>> {
+    fn deserialize(
+        &self,
+        config: HashMap<String, String>,
+        _: &Deserializers,
+    ) -> Result<Box<Append>, Box<Error + Sync + Send>> {
         Ok(Box::new(TestAppender(config["key"].parse().unwrap())))
     }
 }

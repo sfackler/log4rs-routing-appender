@@ -33,7 +33,7 @@
 //! info!("Starting job");
 //! # }
 //! ```
-#![doc(html_root_url="https://docs.rs/log4rs-routing-appender/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/log4rs-routing-appender/0.3.0")]
 #![warn(missing_docs)]
 extern crate antidote;
 extern crate linked_hash_map;
@@ -44,19 +44,19 @@ extern crate log4rs;
 extern crate humantime;
 #[cfg(feature = "log-mdc")]
 extern crate log_mdc;
+#[cfg(feature = "ordered-float")]
+extern crate ordered_float;
 #[cfg(feature = "serde")]
 extern crate serde;
 #[cfg(feature = "serde-value")]
 extern crate serde_value;
-#[cfg(feature = "ordered-float")]
-extern crate ordered_float;
 
 #[cfg(feature = "serde_derive")]
 #[macro_use]
 extern crate serde_derive;
 
 use antidote::Mutex;
-use log::LogRecord;
+use log::Record;
 use log4rs::append::Append;
 use std::error::Error;
 use std::fmt;
@@ -93,7 +93,6 @@ struct CacheConfig {
     idle_timeout: Option<Duration>,
 }
 
-
 /// Registers the following mappings:
 ///
 /// * Appenders
@@ -124,16 +123,20 @@ impl fmt::Debug for RoutingAppender {
 }
 
 impl Append for RoutingAppender {
-    fn append(&self, record: &LogRecord) -> Result<(), Box<Error + Sync + Send>> {
+    fn append(&self, record: &Record) -> Result<(), Box<Error + Sync + Send>> {
         let appender = self.router.route(record, &mut self.cache.lock())?;
         appender.appender().append(record)
     }
+
+    fn flush(&self) {}
 }
 
 impl RoutingAppender {
     /// Creates a new `RoutingAppender` builder.
     pub fn builder() -> RoutingAppenderBuilder {
-        RoutingAppenderBuilder { idle_timeout: Duration::from_secs(2 * 60) }
+        RoutingAppenderBuilder {
+            idle_timeout: Duration::from_secs(2 * 60),
+        }
     }
 }
 
@@ -191,10 +194,11 @@ impl Deserialize for RoutingAppenderDeserializer {
     type Trait = Append;
     type Config = RoutingAppenderConfig;
 
-    fn deserialize(&self,
-                   config: RoutingAppenderConfig,
-                   deserializers: &Deserializers)
-                   -> Result<Box<Append>, Box<Error + Sync + Send>> {
+    fn deserialize(
+        &self,
+        config: RoutingAppenderConfig,
+        deserializers: &Deserializers,
+    ) -> Result<Box<Append>, Box<Error + Sync + Send>> {
         let mut builder = RoutingAppender::builder();
         if let Some(idle_timeout) = config.cache.idle_timeout {
             builder = builder.idle_timeout(idle_timeout);
@@ -214,7 +218,8 @@ struct RouterConfig {
 #[cfg(feature = "file")]
 impl<'de> de::Deserialize<'de> for RouterConfig {
     fn deserialize<D>(d: D) -> Result<RouterConfig, D::Error>
-        where D: de::Deserializer<'de>
+    where
+        D: de::Deserializer<'de>,
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
 
@@ -232,13 +237,15 @@ impl<'de> de::Deserialize<'de> for RouterConfig {
 
 #[cfg(feature = "file")]
 fn de_duration<'de, D>(d: D) -> Result<Option<Duration>, D::Error>
-    where D: de::Deserializer<'de>
+where
+    D: de::Deserializer<'de>,
 {
     struct S(Duration);
 
     impl<'de2> de::Deserialize<'de2> for S {
         fn deserialize<D>(d: D) -> Result<S, D::Error>
-            where D: de::Deserializer<'de2>
+        where
+            D: de::Deserializer<'de2>,
         {
             struct V;
 
@@ -250,7 +257,8 @@ fn de_duration<'de, D>(d: D) -> Result<Option<Duration>, D::Error>
                 }
 
                 fn visit_str<E>(self, v: &str) -> Result<S, E>
-                    where E: de::Error
+                where
+                    E: de::Error,
                 {
                     humantime::parse_duration(v)
                         .map(S)

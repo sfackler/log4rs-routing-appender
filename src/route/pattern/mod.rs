@@ -35,14 +35,14 @@
 //!
 //! [MDC]: https://crates.io/crates/log-mdc
 use log4rs::file::{Deserialize, Deserializers};
-use log::LogRecord;
+use log::Record;
 use serde::de;
 use serde_value::Value;
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt;
 
-use route::{Route, Cache, Appender, Entry};
+use route::{Appender, Cache, Entry, Route};
 use route::pattern::template::Template;
 
 mod parser;
@@ -64,20 +64,17 @@ pub struct PatternRouter {
 
 impl fmt::Debug for PatternRouter {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("PatternRouter")
-            .finish()
+        fmt.debug_struct("PatternRouter").finish()
     }
 }
 
 impl Route for PatternRouter {
-    fn route(&self,
-             _: &LogRecord,
-             cache: &mut Cache)
-             -> Result<Appender, Box<Error + Sync + Send>> {
+    fn route(&self, _: &Record, cache: &mut Cache) -> Result<Appender, Box<Error + Sync + Send>> {
         match cache.entry(self.config.key()) {
             Entry::Occupied(e) => Ok(e.into_value()),
             Entry::Vacant(e) => {
-                let appender = self.deserializers.deserialize(&self.kind, self.config.expand()?)?;
+                let appender = self.deserializers
+                    .deserialize(&self.kind, self.config.expand()?)?;
                 Ok(e.insert(appender))
             }
         }
@@ -102,10 +99,11 @@ impl Deserialize for PatternRouterDeserializer {
     type Trait = Route;
     type Config = PatternRouterConfig;
 
-    fn deserialize(&self,
-                   config: PatternRouterConfig,
-                   deserializers: &Deserializers)
-                   -> Result<Box<Route>, Box<Error + Sync + Send>> {
+    fn deserialize(
+        &self,
+        config: PatternRouterConfig,
+        deserializers: &Deserializers,
+    ) -> Result<Box<Route>, Box<Error + Sync + Send>> {
         Ok(Box::new(PatternRouter {
             deserializers: deserializers.clone(),
             kind: config.pattern.kind,
@@ -121,7 +119,8 @@ struct AppenderConfig {
 
 impl<'de> de::Deserialize<'de> for AppenderConfig {
     fn deserialize<D>(d: D) -> Result<AppenderConfig, D::Error>
-        where D: de::Deserializer<'de>
+    where
+        D: de::Deserializer<'de>,
     {
         let mut map = BTreeMap::<Value, Value>::deserialize(d)?;
 

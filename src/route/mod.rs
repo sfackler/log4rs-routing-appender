@@ -2,7 +2,7 @@
 //!
 //! A router determines the appender to which a log event should be sent.
 use linked_hash_map::LinkedHashMap;
-use log::LogRecord;
+use log::Record;
 use log4rs::append::Append;
 use std::error::Error;
 use std::fmt;
@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 #[cfg(feature = "file")]
 use log4rs::file::Deserializable;
 
-use {CacheInner, AppenderInner};
+use {AppenderInner, CacheInner};
 
 #[cfg(feature = "pattern-router")]
 pub mod pattern;
@@ -56,13 +56,11 @@ impl Cache {
 
         match entry {
             Some(appender) => Entry::Occupied(OccupiedEntry(self, appender)),
-            None => {
-                Entry::Vacant(VacantEntry {
-                    cache: self,
-                    key: key,
-                    time: now,
-                })
-            }
+            None => Entry::Vacant(VacantEntry {
+                cache: self,
+                key: key,
+                time: now,
+            }),
         }
     }
 
@@ -90,7 +88,8 @@ impl<'a> Entry<'a> {
     /// Returns the value of the entry, using the provided closure to create and insert it if the
     /// entry is not present in the cache.
     pub fn or_insert_with<F>(self, f: F) -> Appender
-        where F: FnOnce() -> Box<Append>
+    where
+        F: FnOnce() -> Box<Append>,
     {
         match self {
             Entry::Occupied(e) => e.into_value(),
@@ -141,10 +140,11 @@ impl AppenderInner for Appender {
 /// A trait implemented by types that can route log events to appenders.
 pub trait Route: fmt::Debug + 'static + Sync + Send {
     /// Returns the appender to which the provided log event should be routed.
-    fn route(&self,
-             record: &LogRecord,
-             cache: &mut Cache)
-             -> Result<Appender, Box<Error + Sync + Send>>;
+    fn route(
+        &self,
+        record: &Record,
+        cache: &mut Cache,
+    ) -> Result<Appender, Box<Error + Sync + Send>>;
 }
 
 #[cfg(feature = "file")]
